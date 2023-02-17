@@ -12,7 +12,6 @@ class Runner(object):
         self.parent = parent
 
     def _run(self, cmd1, cmd2, cwd):
-
         try:
             tmp_dir = Path(tempfile.mkdtemp())
             shutil.copytree(self.parent / cwd, tmp_dir / cwd)

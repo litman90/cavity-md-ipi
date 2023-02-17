@@ -13,10 +13,27 @@ from xml.sax.handler import ContentHandler
 import numpy as np
 
 
-__all__ = ['xml_node', 'xml_handler', 'xml_parse_string', 'xml_parse_file', 'xml_write',
-           'read_type', 'read_float', 'read_int', 'read_bool', 'read_list',
-           'read_array', 'read_tuple', 'read_dict', 'write_type', 'write_list',
-           'write_tuple', 'write_float', 'write_bool', 'write_dict']
+__all__ = [
+    "xml_node",
+    "xml_handler",
+    "xml_parse_string",
+    "xml_parse_file",
+    "xml_write",
+    "read_type",
+    "read_float",
+    "read_int",
+    "read_bool",
+    "read_list",
+    "read_array",
+    "read_tuple",
+    "read_dict",
+    "write_type",
+    "write_list",
+    "write_tuple",
+    "write_float",
+    "write_bool",
+    "write_dict",
+]
 
 
 class xml_node(object):
@@ -100,7 +117,11 @@ class xml_handler(ContentHandler):
         """
 
         # creates a new node
-        newnode = xml_node(attribs=dict((k, attrs[k]) for k in list(attrs.keys())), name=name, fields=[])
+        newnode = xml_node(
+            attribs=dict((k, attrs[k]) for k in list(attrs.keys())),
+            name=name,
+            fields=[],
+        )
         # adds it to the list of open nodes
         self.open.append(newnode)
         # adds it to the list of fields of the parent tag
@@ -134,7 +155,7 @@ class xml_handler(ContentHandler):
 
         # all the text found between the tags stored in the appropriate xml_node
         # object
-        self.buffer[self.level] = ''.join(self.buffer[self.level])
+        self.buffer[self.level] = "".join(self.buffer[self.level])
         self.open[self.level].fields.append(("_text", self.buffer[self.level]))
         # 'closes' the xml_node object, as we are no longer within its tags, so
         # there is no more data to be added to it.
@@ -178,29 +199,29 @@ def xml_parse_file(stream):
 def xml_write(xml, name="", indent="", text=""):
     """Writes data in xml file format.
 
-      Writes the tag, attributes, data and closing tag appropriate to the
-      particular fields and attribs data. Writes in a recursive manner, so
-      that objects contained in the fields dictionary have their write function
-      called, so that their tags are written between the start and end tags
-      of this object, as is required for the xml format.
+    Writes the tag, attributes, data and closing tag appropriate to the
+    particular fields and attribs data. Writes in a recursive manner, so
+    that objects contained in the fields dictionary have their write function
+    called, so that their tags are written between the start and end tags
+    of this object, as is required for the xml format.
 
-      This also adds an indent to the lower levels of the xml heirarchy,
-      so that it is easy to see which tags contain other tags.
+    This also adds an indent to the lower levels of the xml heirarchy,
+    so that it is easy to see which tags contain other tags.
 
-      Args:
-         name: An optional string giving the tag name. Defaults to "".
-         indent: An optional string giving the string to be added to the start
-            of the line, so usually a number of tabs. Defaults to "".
-         text: Additional text to be output between the tags.
+    Args:
+       name: An optional string giving the tag name. Defaults to "".
+       indent: An optional string giving the string to be added to the start
+          of the line, so usually a number of tabs. Defaults to "".
+       text: Additional text to be output between the tags.
 
-      Returns:
-         A string giving all the data contained in the fields and attribs
-         dictionaries, in the appropriate xml format.
+    Returns:
+       A string giving all the data contained in the fields and attribs
+       dictionaries, in the appropriate xml format.
     """
 
     rstr = ""
     if not name == "":
-        rstr = indent + "<" + name;
+        rstr = indent + "<" + name
         for a, v in xml.attribs.items():
             rstr += " " + a + "='" + v + "'"
         rstr += ">"
@@ -211,7 +232,8 @@ def xml_write(xml, name="", indent="", text=""):
     for a, v in xml.fields:
         if a == "_text":
             rstr += v.strip()
-            if v.strip() != "": inline = True
+            if v.strip() != "":
+                inline = True
         else:
             rstr += "\n" + xml_write(v, indent="  " + indent, name=a, text="\n")
 
@@ -331,7 +353,7 @@ def read_list(data, delims="[]", split=",", strip=" \n\t'"):
     except ValueError:
         raise ValueError("Error in list syntax: could not locate delimiters")
 
-    rlist = data[begin + 1:end].split(split)
+    rlist = data[begin + 1 : end].split(split)
     for i in range(len(rlist)):
         rlist[i] = rlist[i].strip(strip)
 
@@ -441,7 +463,7 @@ readtype_funcs = {
     bool: read_bool,
     str: str.strip,
     tuple: read_tuple,
-    np.uint: read_int
+    np.uint: read_int,
 }
 
 
@@ -573,5 +595,5 @@ writetype_funcs = {
     bool: write_bool,
     str: str.strip,
     tuple: write_tuple,
-    np.uint: str
+    np.uint: str,
 }

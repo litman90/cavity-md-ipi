@@ -12,7 +12,8 @@ def banded_hessian(h, im, masses=True, shift=0.001):
     """Given Hessian in the reduced format (h), construct
     the upper band hessian including the RP terms.
     If masses is True returns hessian otherwise it returns dynmat
-    shift is value that is added to the diagonal to avoid numerical problems with close to 0 frequencies"""
+    shift is value that is added to the diagonal to avoid numerical problems with close to 0 frequencies
+    """
     nbeads = im.dbeads.nbeads
     natoms = im.dbeads.natoms
     coef = im.coef  # new_disc
@@ -24,9 +25,13 @@ def banded_hessian(h, im, masses=True, shift=0.001):
 
     # add physical part
     for i in range(nbeads):
-        h_aux = h[:, i * natoms * 3:(i + 1) * natoms * 3]  # Peaks one physical hessian
+        h_aux = h[
+            :, i * natoms * 3 : (i + 1) * natoms * 3
+        ]  # Peaks one physical hessian
         for j in range(1, ndiag):
-            href[j, (ndiag - 1 - j) + i * natoms * 3:(i + 1) * natoms * 3] = np.diag(h_aux, ndiag - 1 - j)
+            href[j, (ndiag - 1 - j) + i * natoms * 3 : (i + 1) * natoms * 3] = np.diag(
+                h_aux, ndiag - 1 - j
+            )
 
     # add spring parts
     if nbeads > 1:
@@ -41,7 +46,7 @@ def banded_hessian(h, im, masses=True, shift=0.001):
         href[-1, :] += diag_sp
 
         # Non-Diagonal
-        d_out = - d_corner
+        d_out = -d_corner
         ndiag_sp = np.array([[d_out]]).repeat(im.dbeads.nbeads - 1, axis=0).flatten()
         href[0, :] = np.concatenate((np.zeros(natoms * 3), ndiag_sp))
 
@@ -53,9 +58,13 @@ def banded_hessian(h, im, masses=True, shift=0.001):
 
     # add physical part
     for i in range(nbeads):
-        h_aux = h[:, i * natoms * 3:(i + 1) * natoms * 3] * (coef[i] + coef[i + 1]) / 2  # Peaks one physical hessian
+        h_aux = (
+            h[:, i * natoms * 3 : (i + 1) * natoms * 3] * (coef[i] + coef[i + 1]) / 2
+        )  # Peaks one physical hessian
         for j in range(1, ndiag):
-            hnew[j, (ndiag - 1 - j) + i * natoms * 3:(i + 1) * natoms * 3] = np.diag(h_aux, ndiag - 1 - j)
+            hnew[j, (ndiag - 1 - j) + i * natoms * 3 : (i + 1) * natoms * 3] = np.diag(
+                h_aux, ndiag - 1 - j
+            )
 
     if nbeads > 1:
         # Diagonal
@@ -67,9 +76,11 @@ def banded_hessian(h, im, masses=True, shift=0.001):
         d_init = d_corner / coef[1]
         d_fin = d_corner / coef[-2]
 
-        d_mid = d_corner * (1. / coef[1] + 1.0 / coef[2])
+        d_mid = d_corner * (1.0 / coef[1] + 1.0 / coef[2])
         for i in range(2, im.dbeads.nbeads - 1):
-            d_mid = np.concatenate((d_mid, d_corner * (1. / coef[i] + 1.0 / coef[i + 1])))
+            d_mid = np.concatenate(
+                (d_mid, d_corner * (1.0 / coef[i] + 1.0 / coef[i + 1]))
+            )
 
         diag_sp = np.concatenate((d_init, d_mid, d_fin))
         hnew[-1, :] += diag_sp
@@ -77,7 +88,7 @@ def banded_hessian(h, im, masses=True, shift=0.001):
         # Non-Diagonal
         d_mid = -d_corner * (1.0 / coef[1])
         for i in range(2, im.dbeads.nbeads):
-            d_mid = np.concatenate((d_mid, -d_corner * (1. / coef[i])))
+            d_mid = np.concatenate((d_mid, -d_corner * (1.0 / coef[i])))
         hnew[0, :] = np.concatenate((np.zeros(natoms * 3), d_mid))
 
     # Add safety shift value
@@ -92,9 +103,9 @@ def sym_band(A):
     l = u
     M = A.shape[1]
     newA = np.empty((u + l + 1, M))
-    newA[:u + 1] = A
+    newA[: u + 1] = A
     for i in range(1, l + 1):
-        newA[u + i, :M - i] = A[-1 - i, i:]
+        newA[u + i, : M - i] = A[-1 - i, i:]
     return newA
 
 
@@ -102,10 +113,11 @@ def invmul_banded(A, B, posdef=False):
     """A is in upper banded form
         Solve H.h = -G for Newton - Raphson step, h
     using invmul_banded(H, -G) take step x += h
-    to  find minimum or transition state """
+    to  find minimum or transition state"""
 
     try:
         from scipy import linalg
+
         info("Import of scipy successful", verbosity.high)
     except ImportError:
         raise ValueError(" ")
@@ -124,22 +136,25 @@ def invmul_banded(A, B, posdef=False):
 
 def diag_banded(A, n=2):
     """A is in upper banded form.
-        Returns the smallest n eigenvalue and its corresponding eigenvector.
-        """
+    Returns the smallest n eigenvalue and its corresponding eigenvector.
+    """
     try:
         from scipy.linalg import eig_banded
+
         info("Import of scipy successful", verbosity.high)
     except ImportError:
         raise ValueError(" ")
 
-    d = eig_banded(A, select='i', select_range=(0, n), eigvals_only=True, check_finite=False)
+    d = eig_banded(
+        A, select="i", select_range=(0, n), eigvals_only=True, check_finite=False
+    )
 
     return d
 
 
 def red2comp(h, nbeads, natoms, coef=None):
     """Takes the reduced physical hessian (3*natoms*nbeads,3*natoms)
-     and construct the 'complete' one (3*natoms*nbeads)^2 """
+    and construct the 'complete' one (3*natoms*nbeads)^2"""
     info("\n @Instanton: Creating 'complete' physical hessian \n", verbosity.high)
 
     if coef is None:
@@ -149,20 +164,24 @@ def red2comp(h, nbeads, natoms, coef=None):
     h0 = np.zeros((ii, ii), float)
 
     for j in range(nbeads):
-        h0[j * i:(j + 1) * i, j * i:(j + 1) * i] = h[:, j * i:(j + 1) * i] * (coef[j] + coef[j + 1]) / 2
+        h0[j * i : (j + 1) * i, j * i : (j + 1) * i] = (
+            h[:, j * i : (j + 1) * i] * (coef[j] + coef[j + 1]) / 2
+        )
     return h0
 
 
 def get_imvector(h, m3):
-    """ Compute eigenvector  corresponding to the imaginary mode
-            IN     h      = hessian
-                   m3     = mass vector (dimension = 1 x 3*natoms)
-            OUT    imv    = eigenvector corresponding to the imaginary mode
-        """
+    """Compute eigenvector  corresponding to the imaginary mode
+    IN     h      = hessian
+           m3     = mass vector (dimension = 1 x 3*natoms)
+    OUT    imv    = eigenvector corresponding to the imaginary mode
+    """
     info("@get_imvector", verbosity.high)
-    if h.size != m3.size ** 2:
-        raise ValueError("@Get_imvector. Initial hessian size does not match system size.")
-    m = 1.0 / (m3 ** 0.5)
+    if h.size != m3.size**2:
+        raise ValueError(
+            "@Get_imvector. Initial hessian size does not match system size."
+        )
+    m = 1.0 / (m3**0.5)
     mm = np.outer(m, m)
     hm = np.multiply(h, mm)
 
@@ -177,61 +196,94 @@ def get_imvector(h, m3):
     info(" @GEOP: 2 frequency %4.1f cm^-1" % freq[1], verbosity.low)
     info(" @GEOP: 3 frequency %4.1f cm^-1" % freq[2], verbosity.low)
     if freq[0] > -80 and freq[0] < 0:
-        raise ValueError(" @GEOP: Small negative frequency %4.1f cm^-1" % freq, verbosity.low)
+        raise ValueError(
+            " @GEOP: Small negative frequency %4.1f cm^-1" % freq, verbosity.low
+        )
     elif freq[0] > 0:
-        raise ValueError("@GEOP: The smallest frequency is positive. We aren't in a TS. Please check your hessian")
+        raise ValueError(
+            "@GEOP: The smallest frequency is positive. We aren't in a TS. Please check your hessian"
+        )
 
-    info(" @get_imvector: We stretch along the mode with freq %f cm^1" % freq[0], verbosity.low)
+    info(
+        " @get_imvector: We stretch along the mode with freq %f cm^1" % freq[0],
+        verbosity.low,
+    )
 
     imv = w[:, 0] * (m3[:] ** 0.5)
     imv = imv / np.linalg.norm(imv)
 
     return imv.reshape(1, imv.size)
 
+
 # def print_instanton_geo(prefix, step, nbeads, natoms, names, q, pots, cell, shift):
 
 
-def print_instanton_geo(prefix, step, nbeads, natoms, names, q, f, pots, cell, shift, output_maker):
-
-    outfile = output_maker.get_output(prefix + '_' + str(step) + '.ener', 'w')
-    print('#Bead    Energy (eV)', file=outfile)
+def print_instanton_geo(
+    prefix, step, nbeads, natoms, names, q, f, pots, cell, shift, output_maker
+):
+    outfile = output_maker.get_output(prefix + "_" + str(step) + ".ener", "w")
+    print("#Bead    Energy (eV)", file=outfile)
     for i in range(nbeads):
-        print((str(i) + '     ' + str(units.unit_to_user('energy', "electronvolt", pots[i] - shift))), file=outfile)
+        print(
+            (
+                str(i)
+                + "     "
+                + str(units.unit_to_user("energy", "electronvolt", pots[i] - shift))
+            ),
+            file=outfile,
+        )
     outfile.close_stream()
 
     # print_file("xyz", pos[0], cell, out, title='positions{angstrom}')
 
-    unit = 'angstrom'
-    unit2 = 'atomic_unit'
+    unit = "angstrom"
+    unit2 = "atomic_unit"
     a, b, c, alpha, beta, gamma = mt.h2abc_deg(cell.h)
 
-    outfile = output_maker.get_output(prefix + '_' + str(step) + '.xyz', 'w')
-    outfile2 = output_maker.get_output(prefix + '_forces_' + str(step) + '.xyz', 'w')
+    outfile = output_maker.get_output(prefix + "_" + str(step) + ".xyz", "w")
+    outfile2 = output_maker.get_output(prefix + "_forces_" + str(step) + ".xyz", "w")
     for i in range(nbeads):
         print(natoms, file=outfile)
         print(natoms, file=outfile2)
 
-        print(('CELL(abcABC):  %f %f %f %f %f %f cell{atomic_unit}  Traj: positions{%s}   Bead:       %i' % (a, b, c, alpha, beta, gamma, unit, i)), file=outfile)
-        print(('CELL(abcABC):  %f %f %f %f %f %f cell{atomic_unit}  Traj: positions{%s}   Bead:       %i' % (a, b, c, alpha, beta, gamma, unit2, i)), file=outfile2)
+        print(
+            (
+                "CELL(abcABC):  %f %f %f %f %f %f cell{atomic_unit}  Traj: positions{%s}   Bead:       %i"
+                % (a, b, c, alpha, beta, gamma, unit, i)
+            ),
+            file=outfile,
+        )
+        print(
+            (
+                "CELL(abcABC):  %f %f %f %f %f %f cell{atomic_unit}  Traj: positions{%s}   Bead:       %i"
+                % (a, b, c, alpha, beta, gamma, unit2, i)
+            ),
+            file=outfile2,
+        )
         # print >> outfile, ('#Potential (eV):   ' + str(units.unit_to_user('energy', "electronvolt", pots[i] - shift)))
 
         for j in range(natoms):
-            print(names[j], \
-                str(units.unit_to_user('length', unit, q[i, 3 * j])), \
-                str(units.unit_to_user('length', unit, q[i, 3 * j + 1])), \
-                str(units.unit_to_user('length', unit, q[i, 3 * j + 2])), file=outfile)
+            print(
+                names[j],
+                str(units.unit_to_user("length", unit, q[i, 3 * j])),
+                str(units.unit_to_user("length", unit, q[i, 3 * j + 1])),
+                str(units.unit_to_user("length", unit, q[i, 3 * j + 2])),
+                file=outfile,
+            )
 
         for j in range(natoms):
-            print(names[j], \
-                str(units.unit_to_user('force', unit2, f[i, 3 * j])), \
-                str(units.unit_to_user('force', unit2, f[i, 3 * j + 1])), \
-                str(units.unit_to_user('force', unit2, f[i, 3 * j + 2])), file=outfile2)
+            print(
+                names[j],
+                str(units.unit_to_user("force", unit2, f[i, 3 * j])),
+                str(units.unit_to_user("force", unit2, f[i, 3 * j + 1])),
+                str(units.unit_to_user("force", unit2, f[i, 3 * j + 2])),
+                file=outfile2,
+            )
     outfile.close_stream()
     outfile2.close_stream()
 
 
 def print_instanton_hess(prefix, step, hessian, output_maker):
-
-    outfile = output_maker.get_output(prefix + '.hess_' + str(step), 'w')
+    outfile = output_maker.get_output(prefix + ".hess_" + str(step), "w")
     np.savetxt(outfile, hessian.reshape(1, hessian.size))
     outfile.close_stream()

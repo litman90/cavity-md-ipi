@@ -16,7 +16,12 @@ cmd1_cmd2_folder_output = [
         "geop/bfgs",
         "min.out",
     ],
-    ["i-pi input.xml ", "i-pi-driver -u -m ch4hcbe", "geop/sd", "min.out", ],
+    [
+        "i-pi input.xml ",
+        "i-pi-driver -u -m ch4hcbe",
+        "geop/sd",
+        "min.out",
+    ],
 ]
 
 
@@ -27,7 +32,6 @@ def test_cmd_and_files(cmd1, cmd2, folder, file):
 
 
 if __name__ == "__main__":
-
-    for (cmd1, cmd2, folder, file) in cmd1_cmd2_folder_output:
+    for cmd1, cmd2, folder, file in cmd1_cmd2_folder_output:
         print("Running {} ".format(folder))
         test_cmd_and_files(cmd1, cmd2, folder, file)

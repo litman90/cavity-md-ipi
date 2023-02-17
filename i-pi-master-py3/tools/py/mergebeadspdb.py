@@ -26,7 +26,6 @@ verbosity.level = "low"
 
 
 def main(prefix, suffix="pos", unitconv="1.0"):
-
     ipos = []
     imode = []
     for filename in sorted(glob.glob(prefix + "." + suffix + "*")):
@@ -55,5 +54,5 @@ def main(prefix, suffix="pos", unitconv="1.0"):
         ifr += 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(*sys.argv[1:])

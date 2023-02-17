@@ -48,7 +48,20 @@ class Planetary(Motion):
             effective classical temperature.
     """
 
-    def __init__(self, timestep, mode="md", nsamples=0, stride=1, screen=0.0, nbeads=-1, thermostat=None, barostat=None, fixcom=False, fixatoms=None, nmts=None):
+    def __init__(
+        self,
+        timestep,
+        mode="md",
+        nsamples=0,
+        stride=1,
+        screen=0.0,
+        nbeads=-1,
+        thermostat=None,
+        barostat=None,
+        fixcom=False,
+        fixatoms=None,
+        nmts=None,
+    ):
         """Initialises a "dynamics" motion object.
 
         Args:
@@ -68,14 +81,21 @@ class Planetary(Motion):
         # the planetary step just computes constrained-centroid properties so it
         # should not advance the timer
         dself.dt = depend_value(name="dt", value=0.0)
-        #dset(self, "dt", depend_value(name="dt", value = 0.0) )
+        # dset(self, "dt", depend_value(name="dt", value = 0.0) )
         self.fixatoms = np.asarray([])
         self.fixcom = True
 
         # nvt-cc means contstant-temperature with constrained centroid
         # this basically is a motion class that will be used to make the
         # centroid propagation at each time step
-        self.ccdyn = Dynamics(timestep, mode="nvt-cc", thermostat=thermostat, nmts=nmts, fixcom=fixcom, fixatoms=fixatoms)
+        self.ccdyn = Dynamics(
+            timestep,
+            mode="nvt-cc",
+            thermostat=thermostat,
+            nmts=nmts,
+            fixcom=fixcom,
+            fixatoms=fixatoms,
+        )
 
     def bind(self, ens, beads, nm, cell, bforce, prng, omaker):
         """Binds ensemble beads, cell, bforce, and prng to the dynamics.
@@ -114,14 +134,19 @@ class Planetary(Motion):
             self.dnm = nm.copy()
             self.dnm.mode = "rpmd"
         else:
-            self.dnm = nm.copy(freqs=nm.omegak[1] * self.nbeads * np.sin(np.pi / self.nbeads)
-                               * np.ones(self.nbeads - 1)
-                               / (beads.nbeads * np.sin(np.pi / beads.nbeads))
-                               )
+            self.dnm = nm.copy(
+                freqs=nm.omegak[1]
+                * self.nbeads
+                * np.sin(np.pi / self.nbeads)
+                * np.ones(self.nbeads - 1)
+                / (beads.nbeads * np.sin(np.pi / beads.nbeads))
+            )
             self.dnm.mode = "manual"
 
         self.dnm.bind(ens, self, beads=self.dbeads, forces=self.dforces)
-        self.dnm.qnm[:] = nm.qnm[:self.nbeads] * np.sqrt(self.nbeads) / np.sqrt(beads.nbeads)
+        self.dnm.qnm[:] = (
+            nm.qnm[: self.nbeads] * np.sqrt(self.nbeads) / np.sqrt(beads.nbeads)
+        )
         self.dens = ens.copy()
         self.dbias = ens.bias.copy(self.dbeads, self.dcell)
         self.dens.bind(self.dbeads, self.dnm, self.dcell, self.dforces, self.dbias)
@@ -137,13 +162,14 @@ class Planetary(Motion):
         self.neval = 0
 
         # finally, binds the ccdyn object
-        self.ccdyn.bind(self.dens, self.dbeads, self.dnm, self.dcell, self.dforces, prng, omaker)
+        self.ccdyn.bind(
+            self.dens, self.dbeads, self.dnm, self.dcell, self.dforces, prng, omaker
+        )
 
         self.omaker = omaker
         self.fomega2 = omaker.get_output("omega2")
 
     def increment(self, dnm):
-
         # accumulates an estimate of the frequency matrix
         sm3 = dstrip(self.dbeads.sm3)
         qms = dstrip(dnm.qnm) * sm3
@@ -159,9 +185,9 @@ class Planetary(Motion):
         self.omega2 -= qffq
 
     def matrix_screen(self):
-        """ Computes a screening matrix to avoid the impact of
+        """Computes a screening matrix to avoid the impact of
         noisy elements of the covariance and frequency matrices for
-        far-away atoms """
+        far-away atoms"""
 
         q = np.array(self.dbeads[0].q).reshape(self.natoms, 3)
         sij = q[:, np.newaxis, :] - q
@@ -184,21 +210,30 @@ class Planetary(Motion):
         return sij
 
     def save_matrix(self, matrix):
-        """ Writes the compressed, sparse frequency matrix to a netstring encoded file """
+        """Writes the compressed, sparse frequency matrix to a netstring encoded file"""
 
-        sparse.save_npz(self.fomega2, matrix, saver=netstring_encoded_savez, compressed=True)
+        sparse.save_npz(
+            self.fomega2, matrix, saver=netstring_encoded_savez, compressed=True
+        )
 
     def step(self, step=None):
-
         if step is not None and step % self.stride != 0:
             return
 
         # Initialize positions to the actual positions, possibly with contraction
 
-        self.dnm.qnm[:] = self.basenm.qnm[:self.nbeads] * np.sqrt(self.nbeads) / np.sqrt(self.basebeads.nbeads)
+        self.dnm.qnm[:] = (
+            self.basenm.qnm[: self.nbeads]
+            * np.sqrt(self.nbeads)
+            / np.sqrt(self.basebeads.nbeads)
+        )
 
         # Randomized momenta
-        self.dnm.pnm = self.prng.gvec((self.dbeads.nbeads, 3 * self.dbeads.natoms)) * np.sqrt(self.dnm.dynm3) * np.sqrt(self.dens.temp * self.dbeads.nbeads * Constants.kb)
+        self.dnm.pnm = (
+            self.prng.gvec((self.dbeads.nbeads, 3 * self.dbeads.natoms))
+            * np.sqrt(self.dnm.dynm3)
+            * np.sqrt(self.dens.temp * self.dbeads.nbeads * Constants.kb)
+        )
         self.dnm.pnm[0] = 0.0
 
         # Resets the frequency matrix
@@ -219,7 +254,12 @@ class Planetary(Motion):
 
         self.neval += 1
 
-        self.omega2 /= self.dbeads.nbeads * self.dens.temp * (self.nsamples + 1) * (self.dbeads.nbeads - 1)
+        self.omega2 /= (
+            self.dbeads.nbeads
+            * self.dens.temp
+            * (self.nsamples + 1)
+            * (self.dbeads.nbeads - 1)
+        )
         self.tsave -= time.time()
 
         if self.screen > 0.0:
@@ -238,4 +278,8 @@ class Planetary(Motion):
         self.save_matrix(save_omega2)
 
         self.tsave += time.time()
-        info("@ PLANETARY MODEL Average timing: %f s, %f s, %f s\n" % (self.tmc / self.neval, self.tmtx / self.neval, self.tsave / self.neval), verbosity.high)
+        info(
+            "@ PLANETARY MODEL Average timing: %f s, %f s, %f s\n"
+            % (self.tmc / self.neval, self.tmtx / self.neval, self.tsave / self.neval),
+            verbosity.high,
+        )

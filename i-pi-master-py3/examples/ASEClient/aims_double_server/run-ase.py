@@ -4,8 +4,8 @@ import sys
 from ase.optimize import BFGS as BFGS
 from ase.optimize.optimize import Optimizer
 from ase.calculators.aims import Aims
-from ase.calculators.socketio import SocketClient,SocketIOCalculator
-from ase.io import read 
+from ase.calculators.socketio import SocketClient, SocketIOCalculator
+from ase.io import read
 
 ####### Define geometry to initialize AIMS   ################
 
@@ -19,7 +19,7 @@ usr_settings = {
 }
 
 dft_settings = {
-# system settings
+    # system settings
     "xc": "pbe",
     "spin": "none",
     "compute_forces": True,
@@ -32,17 +32,16 @@ aux_settings = {"label": workdir, "use_pimd_wrapper": ("localhost", port_aims)}
 
 calc = Aims(**usr_settings, **dft_settings, **aux_settings)
 
-#atoms.set_calculator(calc)
+# atoms.set_calculator(calc)
 
 ################## Create Client ############################
-#inet
-port_ipi=10200
-host_ipi='localhost'
+# inet
+port_ipi = 10200
+host_ipi = "localhost"
 client = SocketClient(host=host_ipi, port=port_ipi)
 
 ################## Create ASE SERVER ############################
 
-with SocketIOCalculator(calc, log="socketio.log",port=port_aims) as io_calc:
-     atoms.set_calculator(io_calc)
-     client.run(atoms)
-
+with SocketIOCalculator(calc, log="socketio.log", port=port_aims) as io_calc:
+    atoms.set_calculator(io_calc)
+    client.run(atoms)

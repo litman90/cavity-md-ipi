@@ -26,9 +26,10 @@ from ipi.utils.softexit import softexit
 # Start Tao's modification
 from .photons import photons
 from .dipole import dipole
+
 # End Tao's modification
 
-__all__ = ['InterfaceCavPhSocket']
+__all__ = ["InterfaceCavPhSocket"]
 
 
 HDRLEN = 12
@@ -118,8 +119,9 @@ class DriverSocket(socket.socket):
            socket: A socket through which the communication should be done.
         """
 
-        super(DriverSocket, self).__init__(sock.family, sock.type, sock.proto,
-                        fileno=socket.dup(sock.fileno()))
+        super(DriverSocket, self).__init__(
+            sock.family, sock.type, sock.proto, fileno=socket.dup(sock.fileno())
+        )
         self.settimeout(sock.gettimeout())
         self._buf = np.zeros(0, np.byte)
         if socket:
@@ -157,7 +159,7 @@ class DriverSocket(socket.socket):
         """
 
         blen = dest.itemsize * dest.size
-        if (blen > len(self._buf)):
+        if blen > len(self._buf):
             self._buf.resize(blen)
         bpos = 0
         ntimeout = 0
@@ -170,14 +172,18 @@ class DriverSocket(socket.socket):
                 bpart = ""
                 bpart = self.recv(blen - bpos)
                 if len(bpart) == 0:
-                    raise socket.timeout    # if this keeps returning no data, we are in trouble....
-                self._buf[bpos:bpos + len(bpart)] = np.fromstring(bpart, np.byte)
+                    raise socket.timeout  # if this keeps returning no data, we are in trouble....
+                self._buf[bpos : bpos + len(bpart)] = np.fromstring(bpart, np.byte)
             except socket.timeout:
-                #warning(" @CavPhSOCKET:   Timeout in recvall, trying again!", verbosity.low)
+                # warning(" @CavPhSOCKET:   Timeout in recvall, trying again!", verbosity.low)
                 timeout = True
                 ntimeout += 1
                 if ntimeout > NTIMEOUT:
-                    warning(" @CavPhSOCKET:  Couldn't receive within %5d attempts. Time to give up!" % (NTIMEOUT), verbosity.low)
+                    warning(
+                        " @CavPhSOCKET:  Couldn't receive within %5d attempts. Time to give up!"
+                        % (NTIMEOUT),
+                        verbosity.low,
+                    )
                     raise Disconnected()
                 pass
             if not timeout and len(bpart) == 0:
@@ -247,7 +253,9 @@ class Driver(DriverSocket):
         """Tries to send an exit message to clients to let them exit gracefully."""
 
         if self.exit_on_disconnect:
-            trd = threading.Thread(target=softexit.trigger, kwargs={"message": "Client shutdown."})
+            trd = threading.Thread(
+                target=softexit.trigger, kwargs={"message": "Client shutdown."}
+            )
             trd.daemon = True
             trd.start()
 
@@ -282,7 +290,10 @@ class Driver(DriverSocket):
             warning(" @CavPhSOCKET:   Timeout in status recv!", verbosity.debug)
             return Status.Up | Status.Busy | Status.Timeout
         except:
-            warning(" @CavPhSOCKET:   Other socket exception. Disconnecting client and trying to carry on.", verbosity.debug)
+            warning(
+                " @CavPhSOCKET:   Other socket exception. Disconnecting client and trying to carry on.",
+                verbosity.debug,
+            )
             return Status.Disconnected
 
         if not len(reply) == HDRLEN:
@@ -294,12 +305,14 @@ class Driver(DriverSocket):
         elif reply == Message("havedata"):
             return Status.Up | Status.HasData
         else:
-            warning(" @CavPhSOCKET:    Unrecognized reply: " + str(reply), verbosity.low)
+            warning(
+                " @CavPhSOCKET:    Unrecognized reply: " + str(reply), verbosity.low
+            )
             return Status.Up
 
     def get_status(self):
-        """ Sets (and returns) the client internal status. Wait for an answer if
-            the client is busy. """
+        """Sets (and returns) the client internal status. Wait for an answer if
+        the client is busy."""
         status = self._getstatus()
         while status & Status.Busy:
             status = self._getstatus()
@@ -349,8 +362,8 @@ class Driver(DriverSocket):
         self.pos = np.array(pos)
         self.pos_no_photon = self.pos.copy()
         if self.apply_photon:
-            self.pos_no_photon = self.pos[:-3*self.photons.nphoton]
-            self.photons.update_pos(self.pos[-3*self.photons.nphoton:])
+            self.pos_no_photon = self.pos[: -3 * self.photons.nphoton]
+            self.photons.update_pos(self.pos[-3 * self.photons.nphoton :])
             self.dipole.update_pos(self.pos_no_photon.copy())
         if self.dipole.nuclei_force_use_pbc:
             # Apply ABC to the pos_no_photon
@@ -363,13 +376,13 @@ class Driver(DriverSocket):
             self.pos_no_photon = s.reshape((len(s) * 3))
         # End of Tao's modification
 
-        if (self.status & Status.Ready):
+        if self.status & Status.Ready:
             try:
                 self.sendall(Message("posdata"))
                 self.sendall(h_ih[0])
                 self.sendall(h_ih[1])
-                #self.sendall(np.int32(len(pos) / 3))
-                #self.sendall(pos)
+                # self.sendall(np.int32(len(pos) / 3))
+                # self.sendall(pos)
                 nphoton = self.photons.nphoton if self.apply_photon else 0
                 self.sendall(np.int32(len(pos) / 3 - nphoton))
                 self.sendall(self.pos_no_photon)
@@ -393,22 +406,31 @@ class Driver(DriverSocket):
            A list of the form [potential, force, virial, extra].
         """
 
-        if (self.status & Status.HasData):
-            self.sendall(Message("getforce"));
+        if self.status & Status.HasData:
+            self.sendall(Message("getforce"))
             reply = ""
             while True:
                 try:
                     reply = self.recv_msg()
                 except socket.timeout:
-                    warning(" @CavPhSOCKET:   Timeout in getforce, trying again!", verbosity.low)
+                    warning(
+                        " @CavPhSOCKET:   Timeout in getforce, trying again!",
+                        verbosity.low,
+                    )
                     continue
                 except:
-                    warning(" @CavPhSOCKET:   Error while receiving message: %s" % (reply), verbosity.low)
+                    warning(
+                        " @CavPhSOCKET:   Error while receiving message: %s" % (reply),
+                        verbosity.low,
+                    )
                     raise Disconnected()
                 if reply == Message("forceready"):
                     break
                 else:
-                    warning(" @CavPhSOCKET:   Unexpected getforce reply: %s" % (reply), verbosity.low)
+                    warning(
+                        " @CavPhSOCKET:   Unexpected getforce reply: %s" % (reply),
+                        verbosity.low,
+                    )
                 if reply == "":
                     raise Disconnected()
         else:
@@ -458,15 +480,30 @@ class Driver(DriverSocket):
             # try to update charges
             if self.dipole.update_charge:
                 self.dipole.update_charges(mcharge)
-            dipole_x_tot, dipole_y_tot, dmudx, dmudy = self.dipole.calc_dipole_x_y_and_derivatives()
-            info("mux = %.6f muy = %.6f muz = %.6f [units of a.u.]" %(dipole_x_tot, dipole_y_tot, self.dipole.calc_dipoles_z_tot()), verbosity.medium)
+            (
+                dipole_x_tot,
+                dipole_y_tot,
+                dmudx,
+                dmudy,
+            ) = self.dipole.calc_dipole_x_y_and_derivatives()
+            info(
+                "mux = %.6f muy = %.6f muz = %.6f [units of a.u.]"
+                % (dipole_x_tot, dipole_y_tot, self.dipole.calc_dipoles_z_tot()),
+                verbosity.medium,
+            )
 
             mu_int = Ex * dipole_x_tot + Ey * dipole_y_tot
-            mu += mu_photon + mu_int + 0.5 * self.photons.coeff_self * (dipole_x_tot**2 + dipole_y_tot**2)
+            mu += (
+                mu_photon
+                + mu_int
+                + 0.5
+                * self.photons.coeff_self
+                * (dipole_x_tot**2 + dipole_y_tot**2)
+            )
 
             # 2. Modify nuclear force
-            mf[0::3] += - (Ex + self.photons.coeff_self * dipole_x_tot)  * dmudx
-            mf[1::3] += - (Ey + self.photons.coeff_self * dipole_y_tot)  * dmudy
+            mf[0::3] += -(Ex + self.photons.coeff_self * dipole_x_tot) * dmudx
+            mf[1::3] += -(Ey + self.photons.coeff_self * dipole_y_tot) * dmudy
 
             # 3. Update if adding external electric fields
             self.dipole.add_pulse(mf)
@@ -485,14 +522,17 @@ class Driver(DriverSocket):
         return [mu, mf, mvir, mxtra]
 
     def dispatch(self, r):
-        """ Dispatches a request r and looks after it setting results
-            once it has been evaluated. This is meant to be launched as a
-            separate thread, and takes clear of all the communication related to
-            the request.
+        """Dispatches a request r and looks after it setting results
+        once it has been evaluated. This is meant to be launched as a
+        separate thread, and takes clear of all the communication related to
+        the request.
         """
 
         if not self.status & Status.Up:
-            warning(" @CavPhSOCKET:   Inconsistent client state in dispatch thread! (I)", verbosity.low)
+            warning(
+                " @CavPhSOCKET:   Inconsistent client state in dispatch thread! (I)",
+                verbosity.low,
+            )
             return
 
         r["t_dispatched"] = time.time()
@@ -503,7 +543,10 @@ class Driver(DriverSocket):
             self.status = self.get_status()
 
         if not (self.status & Status.Ready):
-            warning(" @CavPhSOCKET:   Inconsistent client state in dispatch thread! (II)", verbosity.low)
+            warning(
+                " @CavPhSOCKET:   Inconsistent client state in dispatch thread! (II)",
+                verbosity.low,
+            )
             return
 
         r["start"] = time.time()
@@ -511,7 +554,10 @@ class Driver(DriverSocket):
 
         self.get_status()
         if not (self.status & Status.HasData):
-            warning(" @CavPhSOCKET:   Inconsistent client state in dispatch thread! (III)", verbosity.low)
+            warning(
+                " @CavPhSOCKET:   Inconsistent client state in dispatch thread! (III)",
+                verbosity.low,
+            )
             return
 
         try:
@@ -569,8 +615,16 @@ class InterfaceCavPhSocket(object):
           update the list of clients and then be reset to zero.
     """
 
-    def __init__(self, address="localhost", port=31415, slots=4,
-                 mode="unix", timeout=1.0, match_mode="auto", exit_on_disconnect=False):
+    def __init__(
+        self,
+        address="localhost",
+        port=31415,
+        slots=4,
+        mode="unix",
+        timeout=1.0,
+        match_mode="auto",
+        exit_on_disconnect=False,
+    ):
         """Initialises interface.
 
         Args:
@@ -594,10 +648,10 @@ class InterfaceCavPhSocket(object):
         self.slots = slots
         self.mode = mode
         self.timeout = timeout
-        self.poll_iter = UPDATEFREQ # triggers pool_update at first poll
-        self.prlist = [] # list of pending requests
-        self.match_mode = match_mode # heuristics to match jobs and active clients
-        self.requests = None # these will be linked to the request list of the FFSocket object using the interface
+        self.poll_iter = UPDATEFREQ  # triggers pool_update at first poll
+        self.prlist = []  # list of pending requests
+        self.match_mode = match_mode  # heuristics to match jobs and active clients
+        self.requests = None  # these will be linked to the request list of the FFSocket object using the interface
         self.exit_on_disconnect = exit_on_disconnect
 
     def open(self):
@@ -611,24 +665,40 @@ class InterfaceCavPhSocket(object):
             self.server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             try:
                 self.server.bind("/tmp/ipi_" + self.address)
-                info("Created unix socket with address " + self.address, verbosity.medium)
+                info(
+                    "Created unix socket with address " + self.address, verbosity.medium
+                )
             except socket.error:
-                raise RuntimeError("Error opening unix socket. Check if a file " + ("/tmp/ipi_" + self.address) + " exists, and remove it if unused.")
+                raise RuntimeError(
+                    "Error opening unix socket. Check if a file "
+                    + ("/tmp/ipi_" + self.address)
+                    + " exists, and remove it if unused."
+                )
 
         elif self.mode == "inet":
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.server.bind((self.address, self.port))
-            info("Created inet socket with address " + self.address + " and port number " + str(self.port), verbosity.medium)
+            info(
+                "Created inet socket with address "
+                + self.address
+                + " and port number "
+                + str(self.port),
+                verbosity.medium,
+            )
         else:
-            raise NameError("InterfaceCavPhSocket mode " + self.mode + " is not implemented (should be unix/inet)")
+            raise NameError(
+                "InterfaceCavPhSocket mode "
+                + self.mode
+                + " is not implemented (should be unix/inet)"
+            )
 
         self.server.listen(self.slots)
         self.server.settimeout(SERVERTIMEOUT)
 
         # these are the two main objects the socket interface should worry about and manage
         self.clients = []  # list of active clients (working or ready to compute)
-        self.jobs = []    # list of jobs
+        self.jobs = []  # list of jobs
 
     def close(self):
         """Closes down the socket."""
@@ -650,7 +720,10 @@ class InterfaceCavPhSocket(object):
             self.server.shutdown(socket.SHUT_RDWR)
             self.server.close()
         except:
-            info(" @CavPhSOCKET: Problem shutting down the server socket. Will just continue and hope for the best.", verbosity.low)
+            info(
+                " @CavPhSOCKET: Problem shutting down the server socket. Will just continue and hope for the best.",
+                verbosity.low,
+            )
         if self.mode == "unix":
             os.unlink("/tmp/ipi_" + self.address)
 
@@ -663,8 +736,11 @@ class InterfaceCavPhSocket(object):
         """
 
         # makes sure to remove the last dead client as soon as possible -- and to get clients if we are dry
-        if (self.poll_iter >= UPDATEFREQ or len(self.clients) == 0 or
-            (len(self.clients) > 0 and not(self.clients[0].status & Status.Up))):
+        if (
+            self.poll_iter >= UPDATEFREQ
+            or len(self.clients) == 0
+            or (len(self.clients) > 0 and not (self.clients[0].status & Status.Up))
+        ):
             self.poll_iter = 0
             self.pool_update()
 
@@ -684,7 +760,12 @@ class InterfaceCavPhSocket(object):
         for c in self.clients[:]:
             if not (c.status & Status.Up):
                 try:
-                    warning(" @CavPhSOCKET:   Client " + str(c.peername) + " died or got unresponsive(C). Removing from the list.", verbosity.low)
+                    warning(
+                        " @CavPhSOCKET:   Client "
+                        + str(c.peername)
+                        + " died or got unresponsive(C). Removing from the list.",
+                        verbosity.low,
+                    )
                     c.shutdown(socket.SHUT_RDWR)
                     c.close()
                 except socket.error:
@@ -696,7 +777,9 @@ class InterfaceCavPhSocket(object):
                     if tc.is_alive():
                         tc.join(2)
                     if j is c:
-                        self.jobs = [w for w in self.jobs if not (w[0] is k and w[1] is j)]  # removes pair in a robust way
+                        self.jobs = [
+                            w for w in self.jobs if not (w[0] is k and w[1] is j)
+                        ]  # removes pair in a robust way
 
                         k["status"] = "Queued"
                         k["start"] = -1
@@ -708,21 +791,34 @@ class InterfaceCavPhSocket(object):
 
         keepsearch = True
         while keepsearch:
-            readable, writable, errored = select.select([self.server], [], [], searchtimeout)
+            readable, writable, errored = select.select(
+                [self.server], [], [], searchtimeout
+            )
             if self.server in readable:
                 client, address = self.server.accept()
                 client.settimeout(TIMEOUT)
                 driver = Driver(client)
-                info(" @CavPhSOCKET:   Client asked for connection from " + str(address) + ". Now hand-shaking.", verbosity.low)
+                info(
+                    " @CavPhSOCKET:   Client asked for connection from "
+                    + str(address)
+                    + ". Now hand-shaking.",
+                    verbosity.low,
+                )
                 driver.get_status()
-                if (driver.status | Status.Up):
+                if driver.status | Status.Up:
                     driver.exit_on_disconnect = self.exit_on_disconnect
                     self.clients.append(driver)
-                    info(" @CavPhSOCKET:   Handshaking was successful. Added to the client list.", verbosity.low)
-                    self.poll_iter = UPDATEFREQ   # if a new client was found, will try again harder next time
+                    info(
+                        " @CavPhSOCKET:   Handshaking was successful. Added to the client list.",
+                        verbosity.low,
+                    )
+                    self.poll_iter = UPDATEFREQ  # if a new client was found, will try again harder next time
                     searchtimeout = SERVERTIMEOUT
                 else:
-                    warning(" @CavPhSOCKET:   Handshaking failed. Dropping connection.", verbosity.low)
+                    warning(
+                        " @CavPhSOCKET:   Handshaking failed. Dropping connection.",
+                        verbosity.low,
+                    )
                     client.shutdown(socket.SHUT_RDWR)
                     client.close()
             else:
@@ -775,7 +871,9 @@ class InterfaceCavPhSocket(object):
         # now check for client status
         if len(self.jobs) == 0:
             for c in self.clients:
-                if c.status == Status.Disconnected:  # client disconnected. force a pool_update
+                if (
+                    c.status == Status.Disconnected
+                ):  # client disconnected. force a pool_update
                     self.poll_iter = UPDATEFREQ
                     return
 
@@ -788,12 +886,12 @@ class InterfaceCavPhSocket(object):
             if chk == 1:
                 nfinished += 1
             elif chk == 0:
-                self.poll_iter = UPDATEFREQ    # client disconnected. force a pool_update
+                self.poll_iter = UPDATEFREQ  # client disconnected. force a pool_update
             nchecked += 1
         tcheck += time.time()
 
         ttotal += time.time()
-        #info("POLL TOTAL: %10.4f  Dispatch(N,t):  %4i, %10.4f   Check(N,t):   %4i, %10.4f" % (ttotal, ndispatch, tdispatch, nchecked, tcheck), verbosity.debug)
+        # info("POLL TOTAL: %10.4f  Dispatch(N,t):  %4i, %10.4f   Check(N,t):   %4i, %10.4f" % (ttotal, ndispatch, tdispatch, nchecked, tcheck), verbosity.debug)
 
         if nfinished > 0:
             # don't wait, just try again to distribute
@@ -801,7 +899,7 @@ class InterfaceCavPhSocket(object):
 
     def dispatch_free_client(self, fc, match_ids="any", send_threads=[]):
         """
-           Tries to find a request to match a free client.
+        Tries to find a request to match a free client.
         """
 
         # first, makes sure that the client is REALLY free
@@ -810,7 +908,14 @@ class InterfaceCavPhSocket(object):
         if fc.status & Status.HasData:
             return False
         if not (fc.status & (Status.Ready | Status.NeedsInit | Status.Busy)):
-            warning(" @CavPhSOCKET: Client " + str(fc.peername) + " is in an unexpected status " + str(fc.status) + " at (1). Will try to keep calm and carry on.", verbosity.low)
+            warning(
+                " @CavPhSOCKET: Client "
+                + str(fc.peername)
+                + " is in an unexpected status "
+                + str(fc.status)
+                + " at (1). Will try to keep calm and carry on.",
+                verbosity.low,
+            )
             return False
 
         for r in self.prlist[:]:
@@ -822,11 +927,25 @@ class InterfaceCavPhSocket(object):
                 continue
 
             # makes sure the request is marked as running and the client included in the jobs list
-            fc.locked = (fc.lastreq is r["id"])
+            fc.locked = fc.lastreq is r["id"]
             r["status"] = "Running"
             self.prlist.remove(r)
-            info(" @CavPhSOCKET: %s Assigning [%5s] request id %4s to client with last-id %4s (% 3d/% 3d : %s)" % (time.strftime("%y/%m/%d-%H:%M:%S"), match_ids, str(r["id"]), str(fc.lastreq), self.clients.index(fc), len(self.clients), str(fc.peername)), verbosity.high)
-            fc_thread = threading.Thread(target=fc.dispatch, name="DISPATCH", kwargs={"r": r})
+            info(
+                " @CavPhSOCKET: %s Assigning [%5s] request id %4s to client with last-id %4s (% 3d/% 3d : %s)"
+                % (
+                    time.strftime("%y/%m/%d-%H:%M:%S"),
+                    match_ids,
+                    str(r["id"]),
+                    str(fc.lastreq),
+                    self.clients.index(fc),
+                    len(self.clients),
+                    str(fc.peername),
+                ),
+                verbosity.high,
+            )
+            fc_thread = threading.Thread(
+                target=fc.dispatch, name="DISPATCH", kwargs={"r": r}
+            )
             self.jobs.append([r, fc, fc_thread])
             fc_thread.daemon = True
             fc_thread.start()
@@ -836,18 +955,34 @@ class InterfaceCavPhSocket(object):
 
     def check_job_finished(self, r, c, ct):
         """
-            Checks if a job has been completed, and retrieves the results
+        Checks if a job has been completed, and retrieves the results
         """
 
         if r["status"] == "Done":
             while ct.is_alive():  # we can wait for end of thread
                 ct.join()
-            self.jobs = [w for w in self.jobs if not (w[0] is r and w[1] is c)]  # removes pair in a robust way
+            self.jobs = [
+                w for w in self.jobs if not (w[0] is r and w[1] is c)
+            ]  # removes pair in a robust way
             return 1
 
-        if self.timeout > 0 and r["start"] > 0 and time.time() - r["start"] > self.timeout:
-            warning(" @CavPhSOCKET:  Timeout! request has been running for " + str(time.time() - r["start"]) + " sec.", verbosity.low)
-            warning(" @CavPhSOCKET:   Client " + str(c.peername) + " died or got unresponsive(A). Disconnecting.", verbosity.low)
+        if (
+            self.timeout > 0
+            and r["start"] > 0
+            and time.time() - r["start"] > self.timeout
+        ):
+            warning(
+                " @CavPhSOCKET:  Timeout! request has been running for "
+                + str(time.time() - r["start"])
+                + " sec.",
+                verbosity.low,
+            )
+            warning(
+                " @CavPhSOCKET:   Client "
+                + str(c.peername)
+                + " died or got unresponsive(A). Disconnecting.",
+                verbosity.low,
+            )
             try:
                 c.shutdown(socket.SHUT_RDWR)
             except socket.error:

@@ -25,12 +25,19 @@ from ipi.engine.properties import getkey
 from ipi.engine.atoms import *
 from ipi.engine.cell import *
 
-__all__ = ['PropertyOutput', 'TrajectoryOutput', 'CheckpointOutput', 'OutputList', 'OutputMaker', 'BaseOutput']
+__all__ = [
+    "PropertyOutput",
+    "TrajectoryOutput",
+    "CheckpointOutput",
+    "OutputList",
+    "OutputMaker",
+    "BaseOutput",
+]
 
 
 class OutputList(list):
-    """ A simple decorated list to save the output prefix and bring it
-    back to the initialization phase of the simulation """
+    """A simple decorated list to save the output prefix and bring it
+    back to the initialization phase of the simulation"""
 
     def __init__(self, prefix, olist):
         super(OutputList, self).__init__(olist)
@@ -38,18 +45,16 @@ class OutputList(list):
 
 
 class OutputMaker(dobject):
-    """ Class to create floating outputs with an appropriate prefix """
+    """Class to create floating outputs with an appropriate prefix"""
 
     def __init__(self, prefix="", f_start=False):
         self.prefix = prefix
         self.f_start = f_start
 
     def bind(self, system):
-
         self.system = system
 
     def get_output(self, filename="out", mode=None):
-
         if self.prefix != "":
             filename = self.prefix + "." + filename
         rout = BaseOutput(filename)
@@ -63,7 +68,7 @@ class OutputMaker(dobject):
 
 
 class BaseOutput(object):
-    """Base class for outputs. Deals with flushing upon close and little more """
+    """Base class for outputs. Deals with flushing upon close and little more"""
 
     def __init__(self, filename="out"):
         """Initializes the class"""
@@ -110,7 +115,7 @@ class BaseOutput(object):
             os.remove(self.filename)
 
     def write(self, data):
-        """ Writes data to file """
+        """Writes data to file"""
 
         if self.out is not None:
             return self.out.write(data)
@@ -151,8 +156,8 @@ class PropertyOutput(BaseOutput):
         super(PropertyOutput, self).__init__(filename)
 
         if outlist is None:
-            outlist = np.zeros(0, np.dtype('|U1024'))
-        self.outlist = np.asarray(outlist, np.dtype('|U1024'))
+            outlist = np.zeros(0, np.dtype("|U1024"))
+        self.outlist = np.asarray(outlist, np.dtype("|U1024"))
         self.stride = stride
         self.flush = flush
         self.nout = 0
@@ -170,7 +175,10 @@ class PropertyOutput(BaseOutput):
         for what in self.outlist:
             key = getkey(what)
             if not key in list(system.properties.property_dict.keys()):
-                print("Computable properties list: ", list(system.properties.property_dict.keys()))
+                print(
+                    "Computable properties list: ",
+                    list(system.properties.property_dict.keys()),
+                )
                 raise KeyError(key + " is not a recognized property")
 
         super(PropertyOutput, self).bind(mode)
@@ -205,7 +213,8 @@ class PropertyOutput(BaseOutput):
               are not contained in the property_dict member of properties.
         """
 
-        if softexit.triggered: return  # don't write if we are about to exit!
+        if softexit.triggered:
+            return  # don't write if we are about to exit!
 
         if not (self.system.simul.step + 1) % self.stride == 0:
             return
@@ -253,8 +262,17 @@ class TrajectoryOutput(BaseOutput):
        system: The System object to get the data to be output from.
     """
 
-    def __init__(self, filename="out", stride=1, flush=1, what="", format="xyz", cell_units="atomic_unit", ibead=-1):
-        """ Initializes a property output stream opening the corresponding
+    def __init__(
+        self,
+        filename="out",
+        stride=1,
+        flush=1,
+        what="",
+        format="xyz",
+        cell_units="atomic_unit",
+        ibead=-1,
+    ):
+        """Initializes a property output stream opening the corresponding
         file name.
 
         Also writes out headers.
@@ -292,13 +310,16 @@ class TrajectoryOutput(BaseOutput):
         # Checks as soon as possible if some asked-for trajs are missing or mispelled
         key = getkey(self.what)
         if not key in list(self.system.trajs.traj_dict.keys()):
-            print("Computable trajectories list: ", list(self.system.trajs.traj_dict.keys()))
+            print(
+                "Computable trajectories list: ",
+                list(self.system.trajs.traj_dict.keys()),
+            )
             raise KeyError(key + " is not a recognized output trajectory")
 
         super(TrajectoryOutput, self).bind(mode)
 
     def print_header(self):
-        """ No headers for trajectory files """
+        """No headers for trajectory files"""
         pass
 
     def open_stream(self, mode):
@@ -306,10 +327,20 @@ class TrajectoryOutput(BaseOutput):
 
         # prepare format string for zero-padded number of beads,
         # including underscpre
-        fmt_bead = "{0:0" + str(int(1 + np.floor(np.log(self.system.beads.nbeads) / np.log(10)))) + "d}"
+        fmt_bead = (
+            "{0:0"
+            + str(int(1 + np.floor(np.log(self.system.beads.nbeads) / np.log(10))))
+            + "d}"
+        )
 
-        if getkey(self.what) in ["positions", "velocities", "forces", "extras", "forces_sc", "momenta"]:
-
+        if getkey(self.what) in [
+            "positions",
+            "velocities",
+            "forces",
+            "extras",
+            "forces_sc",
+            "momenta",
+        ]:
             # must write out trajectories for each bead, so must create b streams
 
             # prepare format string for file name
@@ -328,7 +359,6 @@ class TrajectoryOutput(BaseOutput):
                     self.out.append(None)
 
         else:
-
             # open one file
             filename = self.filename + "." + self.format
             self.out = open_backup(filename, mode)
@@ -343,13 +373,16 @@ class TrajectoryOutput(BaseOutput):
             else:
                 self.out.close()
         except AttributeError:
-                    # This gets called on softexit. We want to carry on to shut down as cleanly as possible
-            warning("Exception while closing output stream " + str(self.out), verbosity.low)
+            # This gets called on softexit. We want to carry on to shut down as cleanly as possible
+            warning(
+                "Exception while closing output stream " + str(self.out), verbosity.low
+            )
 
     def write(self):
         """Writes out the required trajectories."""
 
-        if softexit.triggered: return  # don't write if we are about to exit!
+        if softexit.triggered:
+            return  # don't write if we are about to exit!
         if not (self.system.simul.step + 1) % self.stride == 0:
             return
 
@@ -359,22 +392,70 @@ class TrajectoryOutput(BaseOutput):
             doflush = True
             self.nout = 0
 
-        data, dimension, units = self.system.trajs[self.what]  # gets the trajectory data that must be printed
+        data, dimension, units = self.system.trajs[
+            self.what
+        ]  # gets the trajectory data that must be printed
         # quick-and-dirty way to check if a trajectory is "global" or per-bead
         # Checks to see if there is a list of files or just a single file.
         if hasattr(self.out, "__getitem__"):
             if self.ibead < 0:
                 for b in range(len(self.out)):
                     if self.out[b] is not None:
-                        self.write_traj(data, self.what, self.out[b], b, format=self.format, dimension=dimension, units=units, cell_units=self.cell_units, flush=doflush)
+                        self.write_traj(
+                            data,
+                            self.what,
+                            self.out[b],
+                            b,
+                            format=self.format,
+                            dimension=dimension,
+                            units=units,
+                            cell_units=self.cell_units,
+                            flush=doflush,
+                        )
             elif self.ibead < len(self.out):
-                self.write_traj(data, self.what, self.out[self.ibead], self.ibead, format=self.format, dimension=dimension, units=units, cell_units=self.cell_units, flush=doflush)
+                self.write_traj(
+                    data,
+                    self.what,
+                    self.out[self.ibead],
+                    self.ibead,
+                    format=self.format,
+                    dimension=dimension,
+                    units=units,
+                    cell_units=self.cell_units,
+                    flush=doflush,
+                )
             else:
-                raise ValueError("Selected bead index " + str(self.ibead) + " does not exist for trajectory " + self.what)
+                raise ValueError(
+                    "Selected bead index "
+                    + str(self.ibead)
+                    + " does not exist for trajectory "
+                    + self.what
+                )
         else:
-            self.write_traj(data, getkey(self.what), self.out, b=0, format=self.format, dimension=dimension, units=units, cell_units=self.cell_units, flush=doflush)
+            self.write_traj(
+                data,
+                getkey(self.what),
+                self.out,
+                b=0,
+                format=self.format,
+                dimension=dimension,
+                units=units,
+                cell_units=self.cell_units,
+                flush=doflush,
+            )
 
-    def write_traj(self, data, what, stream, b=0, format="xyz", dimension="", units="automatic", cell_units="automatic", flush=True):
+    def write_traj(
+        self,
+        data,
+        what,
+        stream,
+        b=0,
+        format="xyz",
+        dimension="",
+        units="automatic",
+        cell_units="automatic",
+        flush=True,
+    ):
         """Prints out a frame of a trajectory for the specified quantity and bead.
 
         Args:
@@ -389,14 +470,23 @@ class TrajectoryOutput(BaseOutput):
 
         key = getkey(what)
         if key in ["extras"]:
-            stream.write(" #*EXTRAS*# Step:  %10d  Bead:  %5d  \n" % (self.system.simul.step + 1, b))
+            stream.write(
+                " #*EXTRAS*# Step:  %10d  Bead:  %5d  \n"
+                % (self.system.simul.step + 1, b)
+            )
             stream.write(data[b])
             stream.write("\n")
             if flush:
                 stream.flush()
                 os.fsync(stream)
             return
-        elif getkey(what) in ["positions", "velocities", "forces", "forces_sc", "momenta"]:
+        elif getkey(what) in [
+            "positions",
+            "velocities",
+            "forces",
+            "forces_sc",
+            "momenta",
+        ]:
             fatom = Atoms(self.system.beads.natoms)
             fatom.names[:] = self.system.beads.names
             fatom.q[:] = data[b]
@@ -408,9 +498,21 @@ class TrajectoryOutput(BaseOutput):
         fcell = Cell()
         fcell.h = self.system.cell.h
 
-        if units == "": units = "automatic"
-        if cell_units == "": cell_units = "automatic"
-        io.print_file(format, fatom, fcell, stream, title=("Step:  %10d  Bead:   %5d " % (self.system.simul.step + 1, b)), key=key, dimension=dimension, units=units, cell_units=cell_units)
+        if units == "":
+            units = "automatic"
+        if cell_units == "":
+            cell_units = "automatic"
+        io.print_file(
+            format,
+            fatom,
+            fcell,
+            stream,
+            title=("Step:  %10d  Bead:   %5d " % (self.system.simul.step + 1, b)),
+            key=key,
+            dimension=dimension,
+            units=units,
+            cell_units=cell_units,
+        )
         if flush:
             stream.flush()
             os.fsync(stream)
@@ -463,6 +565,7 @@ class CheckpointOutput(dobject):
 
         self.simul = simul
         import ipi.inputs.simulation as isimulation
+
         self.status = isimulation.InputSimulation()
         self.status.store(simul)
 
@@ -497,7 +600,10 @@ class CheckpointOutput(dobject):
         """
 
         if self._storing:
-            info("@ CHECKPOINT: Write called while storing. Force re-storing", verbosity.low)
+            info(
+                "@ CHECKPOINT: Write called while storing. Force re-storing",
+                verbosity.low,
+            )
             self.store()
 
         if not (self.simul.step + 1) % self.stride == 0:

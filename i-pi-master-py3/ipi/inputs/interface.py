@@ -20,7 +20,11 @@ from ipi.utils.inputvalue import *
 from ipi.interfaces.sockets import *
 
 
-__all__ = ['InputInterfaceSocket', 'InputInterfaceCavPhSocket', 'InputInterfaceCavPh2DSocket']
+__all__ = [
+    "InputInterfaceSocket",
+    "InputInterfaceCavPhSocket",
+    "InputInterfaceCavPh2DSocket",
+]
 
 
 class InputInterfaceSocket(Input):
@@ -46,29 +50,67 @@ class InputInterfaceSocket(Input):
           is considered dead. Defaults to one hour.
     """
 
-    fields = {"address": (InputValue, {"dtype": str,
-                                       "default": "localhost",
-                                       "help": "This gives the server address that the socket will run on."}),
-              "port": (InputValue, {"dtype": int,
-                                    "default": 65535,
-                                    "help": "This gives the port number that defines the socket."}),
-              "slots": (InputValue, {"dtype": int,
-                                     "default": 4,
-                                     "help": "This gives the number of client codes that can queue at any one time."}),
-              "latency": (InputValue, {"dtype": float,
-                                       "default": 1e-3,
-                                       "help": "This gives the number of seconds between each check for new clients."}),
-              "timeout": (InputValue, {"dtype": float,
-                                       "default": 3600.0,
-                                       "help": "This gives the number of seconds before assuming a calculation has died. If 0 there is no timeout."})}
-    attribs = {"mode": (InputAttribute, {"dtype": str,
-                                         "options": ["unix", "inet"],
-                                         "default": "inet",
-                                         "help": "Specifies whether the driver interface will listen onto a internet socket [inet] or onto a unix socket [unix]."}),
-               "pbc": (InputAttribute, {"dtype": bool,
-                                        "default": True,
-                                        "help": "Applies periodic boundary conditions to the atoms coordinates before passing them on to the driver code."})
-               }
+    fields = {
+        "address": (
+            InputValue,
+            {
+                "dtype": str,
+                "default": "localhost",
+                "help": "This gives the server address that the socket will run on.",
+            },
+        ),
+        "port": (
+            InputValue,
+            {
+                "dtype": int,
+                "default": 65535,
+                "help": "This gives the port number that defines the socket.",
+            },
+        ),
+        "slots": (
+            InputValue,
+            {
+                "dtype": int,
+                "default": 4,
+                "help": "This gives the number of client codes that can queue at any one time.",
+            },
+        ),
+        "latency": (
+            InputValue,
+            {
+                "dtype": float,
+                "default": 1e-3,
+                "help": "This gives the number of seconds between each check for new clients.",
+            },
+        ),
+        "timeout": (
+            InputValue,
+            {
+                "dtype": float,
+                "default": 3600.0,
+                "help": "This gives the number of seconds before assuming a calculation has died. If 0 there is no timeout.",
+            },
+        ),
+    }
+    attribs = {
+        "mode": (
+            InputAttribute,
+            {
+                "dtype": str,
+                "options": ["unix", "inet"],
+                "default": "inet",
+                "help": "Specifies whether the driver interface will listen onto a internet socket [inet] or onto a unix socket [unix].",
+            },
+        ),
+        "pbc": (
+            InputAttribute,
+            {
+                "dtype": bool,
+                "default": True,
+                "help": "Applies periodic boundary conditions to the atoms coordinates before passing them on to the driver code.",
+            },
+        ),
+    }
 
     default_help = "Specifies the parameters for the socket interface."
     default_label = "INTERFACE"
@@ -98,21 +140,34 @@ class InputInterfaceSocket(Input):
         """
 
         super(InputInterfaceSocket, self).fetch()
-        return InterfaceSocket(address=self.address.fetch(), port=self.port.fetch(),
-                               slots=self.slots.fetch(), mode=self.mode.fetch(),
-                               latency=self.latency.fetch(), timeout=self.timeout.fetch(), dopbc=self.pbc.fetch())
+        return InterfaceSocket(
+            address=self.address.fetch(),
+            port=self.port.fetch(),
+            slots=self.slots.fetch(),
+            mode=self.mode.fetch(),
+            latency=self.latency.fetch(),
+            timeout=self.timeout.fetch(),
+            dopbc=self.pbc.fetch(),
+        )
 
     def check(self):
         """Function that deals with optional arguments."""
 
         super(InputInterfaceSocket, self).check()
         if self.port.fetch() < 1 or self.port.fetch() > 65535:
-            raise ValueError("Port number " + str(self.port.fetch()) + " out of acceptable range.")
+            raise ValueError(
+                "Port number " + str(self.port.fetch()) + " out of acceptable range."
+            )
         elif self.port.fetch() < 1025:
-            warning("Low port number being used, this may interrupt important system processes.", verbosity.low)
+            warning(
+                "Low port number being used, this may interrupt important system processes.",
+                verbosity.low,
+            )
 
         if self.slots.fetch() < 1 or self.slots.fetch() > 5:
-            raise ValueError("Slot number " + str(self.slots.fetch()) + " out of acceptable range.")
+            raise ValueError(
+                "Slot number " + str(self.slots.fetch()) + " out of acceptable range."
+            )
         if self.latency.fetch() < 0:
             raise ValueError("Negative latency parameter specified.")
         if self.timeout.fetch() < 0.0:
@@ -142,29 +197,67 @@ class InputInterfaceCavPhSocket(Input):
           is considered dead. Defaults to one hour.
     """
 
-    fields = {"address": (InputValue, {"dtype": str,
-                                       "default": "localhost",
-                                       "help": "This gives the server address that the socket will run on."}),
-              "port": (InputValue, {"dtype": int,
-                                    "default": 65535,
-                                    "help": "This gives the port number that defines the socket."}),
-              "slots": (InputValue, {"dtype": int,
-                                     "default": 4,
-                                     "help": "This gives the number of client codes that can queue at any one time."}),
-              "latency": (InputValue, {"dtype": float,
-                                       "default": 1e-3,
-                                       "help": "This gives the number of seconds between each check for new clients."}),
-              "timeout": (InputValue, {"dtype": float,
-                                       "default": 3600.0,
-                                       "help": "This gives the number of seconds before assuming a calculation has died. If 0 there is no timeout."})}
-    attribs = {"mode": (InputAttribute, {"dtype": str,
-                                         "options": ["unix", "inet"],
-                                         "default": "inet",
-                                         "help": "Specifies whether the driver interface will listen onto a internet socket [inet] or onto a unix socket [unix]."}),
-               "pbc": (InputAttribute, {"dtype": bool,
-                                        "default": True,
-                                        "help": "Applies periodic boundary conditions to the atoms coordinates before passing them on to the driver code."})
-               }
+    fields = {
+        "address": (
+            InputValue,
+            {
+                "dtype": str,
+                "default": "localhost",
+                "help": "This gives the server address that the socket will run on.",
+            },
+        ),
+        "port": (
+            InputValue,
+            {
+                "dtype": int,
+                "default": 65535,
+                "help": "This gives the port number that defines the socket.",
+            },
+        ),
+        "slots": (
+            InputValue,
+            {
+                "dtype": int,
+                "default": 4,
+                "help": "This gives the number of client codes that can queue at any one time.",
+            },
+        ),
+        "latency": (
+            InputValue,
+            {
+                "dtype": float,
+                "default": 1e-3,
+                "help": "This gives the number of seconds between each check for new clients.",
+            },
+        ),
+        "timeout": (
+            InputValue,
+            {
+                "dtype": float,
+                "default": 3600.0,
+                "help": "This gives the number of seconds before assuming a calculation has died. If 0 there is no timeout.",
+            },
+        ),
+    }
+    attribs = {
+        "mode": (
+            InputAttribute,
+            {
+                "dtype": str,
+                "options": ["unix", "inet"],
+                "default": "inet",
+                "help": "Specifies whether the driver interface will listen onto a internet socket [inet] or onto a unix socket [unix].",
+            },
+        ),
+        "pbc": (
+            InputAttribute,
+            {
+                "dtype": bool,
+                "default": True,
+                "help": "Applies periodic boundary conditions to the atoms coordinates before passing them on to the driver code.",
+            },
+        ),
+    }
 
     default_help = "Specifies the parameters for the socket interface."
     default_label = "INTERFACE"
@@ -194,25 +287,39 @@ class InputInterfaceCavPhSocket(Input):
         """
 
         super(InputInterfaceCavPhSocket, self).fetch()
-        return InterfaceCavPhSocket(address=self.address.fetch(), port=self.port.fetch(),
-                               slots=self.slots.fetch(), mode=self.mode.fetch(),
-                               latency=self.latency.fetch(), timeout=self.timeout.fetch(), dopbc=self.pbc.fetch())
+        return InterfaceCavPhSocket(
+            address=self.address.fetch(),
+            port=self.port.fetch(),
+            slots=self.slots.fetch(),
+            mode=self.mode.fetch(),
+            latency=self.latency.fetch(),
+            timeout=self.timeout.fetch(),
+            dopbc=self.pbc.fetch(),
+        )
 
     def check(self):
         """Function that deals with optional arguments."""
 
         super(InputInterfaceCavPhSocket, self).check()
         if self.port.fetch() < 1 or self.port.fetch() > 65535:
-            raise ValueError("Port number " + str(self.port.fetch()) + " out of acceptable range.")
+            raise ValueError(
+                "Port number " + str(self.port.fetch()) + " out of acceptable range."
+            )
         elif self.port.fetch() < 1025:
-            warning("Low port number being used, this may interrupt important system processes.", verbosity.low)
+            warning(
+                "Low port number being used, this may interrupt important system processes.",
+                verbosity.low,
+            )
 
         if self.slots.fetch() < 1 or self.slots.fetch() > 5:
-            raise ValueError("Slot number " + str(self.slots.fetch()) + " out of acceptable range.")
+            raise ValueError(
+                "Slot number " + str(self.slots.fetch()) + " out of acceptable range."
+            )
         if self.latency.fetch() < 0:
             raise ValueError("Negative latency parameter specified.")
         if self.timeout.fetch() < 0.0:
             raise ValueError("Negative timeout parameter specified.")
+
 
 class InputInterfaceCavPh2DSocket(Input):
 
@@ -237,29 +344,67 @@ class InputInterfaceCavPh2DSocket(Input):
           is considered dead. Defaults to one hour.
     """
 
-    fields = {"address": (InputValue, {"dtype": str,
-                                       "default": "localhost",
-                                       "help": "This gives the server address that the socket will run on."}),
-              "port": (InputValue, {"dtype": int,
-                                    "default": 65535,
-                                    "help": "This gives the port number that defines the socket."}),
-              "slots": (InputValue, {"dtype": int,
-                                     "default": 4,
-                                     "help": "This gives the number of client codes that can queue at any one time."}),
-              "latency": (InputValue, {"dtype": float,
-                                       "default": 1e-3,
-                                       "help": "This gives the number of seconds between each check for new clients."}),
-              "timeout": (InputValue, {"dtype": float,
-                                       "default": 3600.0,
-                                       "help": "This gives the number of seconds before assuming a calculation has died. If 0 there is no timeout."})}
-    attribs = {"mode": (InputAttribute, {"dtype": str,
-                                         "options": ["unix", "inet"],
-                                         "default": "inet",
-                                         "help": "Specifies whether the driver interface will listen onto a internet socket [inet] or onto a unix socket [unix]."}),
-               "pbc": (InputAttribute, {"dtype": bool,
-                                        "default": True,
-                                        "help": "Applies periodic boundary conditions to the atoms coordinates before passing them on to the driver code."})
-               }
+    fields = {
+        "address": (
+            InputValue,
+            {
+                "dtype": str,
+                "default": "localhost",
+                "help": "This gives the server address that the socket will run on.",
+            },
+        ),
+        "port": (
+            InputValue,
+            {
+                "dtype": int,
+                "default": 65535,
+                "help": "This gives the port number that defines the socket.",
+            },
+        ),
+        "slots": (
+            InputValue,
+            {
+                "dtype": int,
+                "default": 4,
+                "help": "This gives the number of client codes that can queue at any one time.",
+            },
+        ),
+        "latency": (
+            InputValue,
+            {
+                "dtype": float,
+                "default": 1e-3,
+                "help": "This gives the number of seconds between each check for new clients.",
+            },
+        ),
+        "timeout": (
+            InputValue,
+            {
+                "dtype": float,
+                "default": 3600.0,
+                "help": "This gives the number of seconds before assuming a calculation has died. If 0 there is no timeout.",
+            },
+        ),
+    }
+    attribs = {
+        "mode": (
+            InputAttribute,
+            {
+                "dtype": str,
+                "options": ["unix", "inet"],
+                "default": "inet",
+                "help": "Specifies whether the driver interface will listen onto a internet socket [inet] or onto a unix socket [unix].",
+            },
+        ),
+        "pbc": (
+            InputAttribute,
+            {
+                "dtype": bool,
+                "default": True,
+                "help": "Applies periodic boundary conditions to the atoms coordinates before passing them on to the driver code.",
+            },
+        ),
+    }
 
     default_help = "Specifies the parameters for the socket interface."
     default_label = "INTERFACE"
@@ -289,21 +434,34 @@ class InputInterfaceCavPh2DSocket(Input):
         """
 
         super(InputInterfaceCavPh2DSocket, self).fetch()
-        return InterfaceCavPh2DSocket(address=self.address.fetch(), port=self.port.fetch(),
-                               slots=self.slots.fetch(), mode=self.mode.fetch(),
-                               latency=self.latency.fetch(), timeout=self.timeout.fetch(), dopbc=self.pbc.fetch())
+        return InterfaceCavPh2DSocket(
+            address=self.address.fetch(),
+            port=self.port.fetch(),
+            slots=self.slots.fetch(),
+            mode=self.mode.fetch(),
+            latency=self.latency.fetch(),
+            timeout=self.timeout.fetch(),
+            dopbc=self.pbc.fetch(),
+        )
 
     def check(self):
         """Function that deals with optional arguments."""
 
         super(InputInterfaceCavPh2DSocket, self).check()
         if self.port.fetch() < 1 or self.port.fetch() > 65535:
-            raise ValueError("Port number " + str(self.port.fetch()) + " out of acceptable range.")
+            raise ValueError(
+                "Port number " + str(self.port.fetch()) + " out of acceptable range."
+            )
         elif self.port.fetch() < 1025:
-            warning("Low port number being used, this may interrupt important system processes.", verbosity.low)
+            warning(
+                "Low port number being used, this may interrupt important system processes.",
+                verbosity.low,
+            )
 
         if self.slots.fetch() < 1 or self.slots.fetch() > 5:
-            raise ValueError("Slot number " + str(self.slots.fetch()) + " out of acceptable range.")
+            raise ValueError(
+                "Slot number " + str(self.slots.fetch()) + " out of acceptable range."
+            )
         if self.latency.fetch() < 0:
             raise ValueError("Negative latency parameter specified.")
         if self.timeout.fetch() < 0.0:

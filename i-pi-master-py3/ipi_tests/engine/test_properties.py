@@ -163,7 +163,6 @@ test_Trajectories_print_traj_prms = [
 
 
 def create_a_fake_system_obj(natoms, q, forces, atom_names, cell):
-
     sys_attr = {
         "beads.natoms": natoms,
         "beads.q": q,
@@ -180,7 +179,6 @@ def create_a_fake_system_obj(natoms, q, forces, atom_names, cell):
 
 @pytest.fixture(params=test_Trajectories_print_traj_prms)
 def prepare_Trajectories_print_traj(request):
-
     (
         natoms,
         nbeads,
@@ -237,7 +235,6 @@ def prepare_Trajectories_print_traj(request):
 
 @pytest.mark.skip(reason="This needs to be updated to match current code.")
 def test_Trajectories_print_traj(prepare_Trajectories_print_traj, mocker):
-
     mock_io = mocker.patch("ipi.engine.properties.io.print_file", autospec=True)
 
     (
