@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
 import socket
-from binascii import hexlify
-import os
 import numpy as np
 from datetime import datetime
-import time
 
 from ipi.interfaces.sockets import Message
-from yaff import ForceField
+
+# from yaff import ForceField
 from yaff.log import log, timer
 
 HDRLEN = 12
@@ -137,9 +135,9 @@ class YAFFDriver(object):
                 else:
                     self.s.send_header(Message("ready"))
             elif header == Message("init"):
-                ibead = np.fromstring(self.s.await_data(L_INT), np.int32)[0]
-                len_init = np.fromstring(self.s.await_data(L_INT), np.int32)[0]
-                init = self.s.await_data(len_init * L_CHAR)
+                # ibead = np.fromstring(self.s.await_data(L_INT), np.int32)[0]
+                # len_init = np.fromstring(self.s.await_data(L_INT), np.int32)[0]
+                # init = self.s.await_data(len_init * L_CHAR)
                 if log.do_high:
                     with log.section(self.log_name):
                         # log( "YAFF driver initialized for pid %s (bead %d - %s)" % (os.getpid(), ibead, init) )
